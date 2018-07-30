@@ -1,5 +1,3 @@
-# Image-recognition
-
 clc;
 clear;
 clear all;
