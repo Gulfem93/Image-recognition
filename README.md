@@ -3,12 +3,15 @@ clear;
 clear all;
 
 %%image resmi okuyor
+
 image_original = imread('image1.jpeg');
 
 %% image gray yapar
+
 image_gray = rgb2gray(image_original);
 
 %% image sobel yapar
+
 image_sobel = edge(image_gray , 'sobel');
 
 %% Binary image
