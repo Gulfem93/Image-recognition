@@ -1,0 +1,143 @@
+# Image-recognition
+
+%% kayan görüntü
+
+clc;
+clear;
+clear all;
+close all;
+
+%%image resmi okuyor
+image_orginal = imread('image1.jpeg');
+
+%% image gray yapar
+image_gray = rgb2gray(image_orginal);
+
+%% image sobel yapar
+image_sobel = edge(image_gray , 'sobel');
+
+%% Binary image
+BW = im2bw(image_sobel,0.4);
+% BW = ~BW;
+
+se = strel('disk' , 10) %disk biçiminde yapısal element oluşturuyoruz
+bw = imclose(BW,se) %iç kısmındaki boşluklar kayboldu
+BW = imfill(bw,'holes');
+
+%% tekrar gray yapar
+image_BW = im2double(BW)
+
+%%
+%image_BW = im2double(image_gaussfilter)
+
+%% konkav yapar 
+image_concav = bwconvhull(BW,'objects');
+figure(22)
+imshow(image_concav)
+image_concav = im2double(image_concav)
+
+%% imadjust method
+image_just = imadjust(image_concav);
+
+%% gausfilter method
+image_gaussfilter = imgaussfilt(image_just,0.8);
+image_gaussfilter = imgaussfilt(image_gaussfilter,1.58);
+
+%% show
+% figure
+% imshow(image_original)
+% figure
+% imshow(image_conkav);
+
+%% image small yapar
+image_small = imresize(image_gaussfilter,[550 400]);
+
+
+%% Harris corner code
+
+k = 0.04;
+Threshold =100000;
+sigma = 2;
+halfwid = sigma * 3;
+image_small = im2double(image_small);
+
+[xx, yy] = meshgrid(-halfwid:halfwid, -halfwid:halfwid);
+
+Gxy = exp(-(xx .^ 2 + yy .^ 2) / (2 * sigma ^ 2));
+
+Gx = xx .* exp(-(xx .^ 2 + yy .^ 2) / (2 * sigma ^ 2));
+Gy = yy .* exp(-(xx .^ 2 + yy .^ 2) / (2 * sigma ^ 2));
+
+numOfRows = size(image_small, 1);
+numOfColumns = size(image_small, 2);
+
+% 1) Compute x and y derivatives of image
+Ix = conv2(Gx, image_small);
+Iy = conv2(Gy, image_small);
+
+% size(Ix);
+
+% 2) Compute products of derivatives at every pixel
+Ix2 = Ix .^ 2;
+Iy2 = Iy .^ 2;
+Ixy = Ix .* Iy;
+
+% 3)Compute the sums of the products of derivatives at each pixel
+Sx2 = conv2(Gxy, Ix2);
+Sy2 = conv2(Gxy, Iy2);
+Sxy = conv2(Gxy, Ixy);
+
+im = zeros(numOfRows, numOfColumns);
+for x = 1:numOfRows,
+   for y = 1:numOfColumns,
+       %x,y
+       % 4) Define at each pixel(x, y) the matrix H
+       H = [Sx2(x, y) Sxy(x, y); Sxy(x, y) Sy2(x, y)];
+       
+       % 5) Compute the response of the detector at each pixel
+       R = det(H) - k * (trace(H) ^ 2);
+       
+       % 6) Threshold on value of R
+       if (R > Threshold)
+          im(x, y) = R;
+       end
+   end
+end
+
+% 7) Compute nonmax suppression
+output = im > imdilate(im , [1 1 1; 1 0 1; 1 1 1]);
+im = uint8 (im);
+
+im = imresize(im , [592,414]);
+% output birlesşim
+im = im2double(im)
+output_1 = im + image_concav;
+
+% figure, imshow(image_small);
+
+figure
+imshow(image_small);
+title('image_small');
+
+figure;
+imshow(output)
+title('output');
+
+
+% imshow(output)
+% title('output');
+% hold on;
+% plot(output(:,1),output(:,2),'r*');
+
+figure
+imshow(output_1)
+title('output_1')
+
+
+
+
+
+
+
+
+
