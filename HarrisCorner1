@@ -1,0 +1,89 @@
+# Image-recognition
+
+clc;
+clear;
+clear all;
+
+%%image resmi okuyor
+image_orginal = imread('image1.jpeg');
+
+%% image gray yapar
+image_gray = rgb2gray(image_orginal);
+
+%% image sobel yapar
+image_sobel = edge(image_gray , 'sobel');
+
+%% Binary image 
+BW = im2bw(image_sobel,0.4);
+% BW = ~BW;
+
+%% boşlukları doldurur
+% % se=strel('disk',10);
+% % bw=imclose(image_BW,se);
+
+
+se = strel('disk' , 10) %disk biçiminde yapısal element oluşturuyoruz
+bw = imclose(BW,se) %iç kısmındaki boşluklar kayboldu
+BW = imfill(bw,'holes');
+
+%% tekrar gray yapar
+image_BW = im2double(BW)
+
+% % cornermetric method
+% image_corner = cornermetric(image_just)
+
+%%
+%image_BW = im2double(image_gaussfilter)
+
+%% konkav yapar 
+image_concav = bwconvhull(BW,'objects');
+figure(22)
+imshow(image_concav)
+image_concav = im2double(image_concav)
+
+%% imadjust method
+image_just = imadjust(image_concav);
+
+%% gausfilter method
+image_gaussfilter = imgaussfilt(image_just,0.8);
+image_gaussfilter = imgaussfilt(image_gaussfilter,1.58);
+
+%% some imported variable
+image = image_just(:,:,1);
+sigma = 1;
+treshold = 100;
+ord = 1
+order = 2 * ord + 1;
+
+%% the derative maske
+[dx,dy] = meshgrid(-1:1 , -1:1);
+imshow(image_just);
+hold on;
+
+%%
+ % Step1 : Computing the deravatives
+ Ix = conv2(double(image_just),dx,'same')
+ Iy = conv2(double(image_just),dy,'same')
+ Ixy = Ix.*Iy
+ 
+ % Step2 : Smoothening using gausian filter
+ g = fspecial('gaussian',15,sigma)
+ 
+ Ix2 = conv2(Ix.*Ix , g , 'same');
+ Iy2 = conv2(Iy.*Iy , g , 'same');
+ Ixy2 = conv2(Ix.*Iy , g , 'same');
+ 
+ % Step3 : Computing the Harris Measure
+ R = (Ix2.*Iy2 - Ixy.^2)./(Ix2 + Iy2);
+ 
+ % Step4 : Find the local maksima
+ LocalMaksima = ordfilt2(R,order.^2,ones(order));
+ 
+ % Step5 : Thresholding
+ ConerPoint = (R == LocalMaksima)&(R > Threshold)
+ [rows,cols] = find(Corner_points)
+ plot(cols,rows,'*','color','r')
+ 
+ 
+
+
